@@ -64,15 +64,19 @@ def getvalue():
 	  "Timeout":300
 	  }
 
-	response = createLamdaFunction(botoObj)
+	resLambda = createLamdaFunction(botoObj)
 
-	print(response)
+	print(resLambda)
 
 	if ltype == 'lambda_invoke':
-		lambdaInvoke(funName,event)
+		resInvoke = lambdaInvoke(funName,event)
+	else:
+		resInvoke = ""
 
 
-	return render_template('index.html')
+	resLambda["success"] = 	"LAMBDA CREATED SUCCESSFULLY!!"
+
+	return render_template('index.html',res_lambda=resLambda, res_invoke=resInvoke)
 
 def createLamdaFunction(botoObj):
 	#print(botoObj)
@@ -102,6 +106,7 @@ def lambdaInvoke(funName,event):
 	)
 	print ("LAMBDA INVOKE RESPONSE..")
 	print (res)
+	return res
 
 
 def fileProcess(filename,zipFileName,fileCode):

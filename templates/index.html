@@ -1,3 +1,8 @@
+
+<table>
+    <tr>
+      <td>
+    
 <form name="search" action="." method="post" enctype="multipart/form-data">
   <input type="hidden" name="ltype" id="ltype" value="lambda">
   <input type="hidden" name="fileCode" value="">
@@ -41,3 +46,16 @@ Event : <textarea rows="10" cols="50" name="event">{}</textarea>
 <input type="submit" onclick="javascript: document.getElementById('ltype').value='lambda_invoke'" value="Create Lambda & Invoke">
 
 </form>
+
+      </td>
+      <td>
+        Lambda Response :: <br>
+        {{ res_lambda }}
+        <br> <br> <br>
+        Lambda Invoke Response :: <br>
+        {{ res_invoke }}
+      </td>
+    </tr>
+</table>
+
+
