@@ -21,7 +21,8 @@ def index():
 
 def getvalue():
 	#print(request.files['zipCode']);
-	
+	#print ("XXHHH",request.form)
+	#print ("XXHHH",request.method)
 	##if 'fileUpload' in request.files:
 	fileUpload=request.files['photo']
 	#print (fileUpload)
@@ -31,14 +32,18 @@ def getvalue():
     # if 'fileUpload' in request.files:
     # 		fileUpload=request.files['photo']
     # 		print (fileUpload)    
-
 	funName=request.form['funName']
 	funName=funName.replace(" ", "-")
 	runTime=request.form['runTime'] #"nodejs10.x"
 	role=request.form['role'] #"arn:aws:iam::112911278656:role/proximity-serverless-dev-us-east-1-lambdaRole"
 	handler=request.form['handler'] #"main.handler"
-	fileCode=request.form['fileCode'] #"Hello test file write"
+	#fileCode=request.form['fileCode'] #"Hello test file write"
+	ltype=request.form['ltype'] #"Hello test file write"
+	event=request.form['event']
 	Timeout=300
+
+	if event == "":
+		event = "{}"
 	
 	# create folder,file and write code into folder
 	# strnew=handler.split(".",2)
@@ -63,11 +68,14 @@ def getvalue():
 
 	print(response)
 
+	if ltype == 'lambda_invoke':
+		lambdaInvoke(funName,event)
+
 
 	return render_template('index.html')
 
 def createLamdaFunction(botoObj):
-	print(botoObj)
+	#print(botoObj)
 	try:
 		response = lambda_client.create_function(
 		  FunctionName=botoObj['FunctionName'],
@@ -82,7 +90,18 @@ def createLamdaFunction(botoObj):
   		print ("lamdbaError==")
   		raise ResourceConflictException('An error occurred (ResourceConflictException) when calling the CreateFunction operation: Function already exist' + botoObj['FunctionName'])
 	else:
+		print ("LAMBDA CREATED SUCCESSFULLY!!")
 		return response
+
+def lambdaInvoke(funName,event):
+	res=lambda_client.invoke(
+	    FunctionName=funName,
+	    InvocationType='Event',
+	    LogType='Tail',
+	    Payload=event
+	)
+	print ("LAMBDA INVOKE RESPONSE..")
+	print (res)
 
 
 def fileProcess(filename,zipFileName,fileCode):
@@ -106,11 +125,12 @@ def fileProcess(filename,zipFileName,fileCode):
 	env_variables = dict() # Environment Variables
 	with open(fileCode, 'rb') as f:
 	  zipped_code = f.read()
-	print(zipped_code)
+	#print(zipped_code)
 
 	return zipped_code
 
 
 
+
 if __name__ == '__main__':
-   app.run(debug = False)
+   app.run(debug = True)

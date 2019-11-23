@@ -1,4 +1,6 @@
 <form name="search" action="." method="post" enctype="multipart/form-data">
+  <input type="hidden" name="ltype" id="ltype" value="lambda">
+  <input type="hidden" name="fileCode" value="">
 Function Name : <input type="text" name="funName"> <br> <br>
 Runtime : <select name="runTime">
   <optgroup label="Node.js">
@@ -29,11 +31,13 @@ Runtime : <select name="runTime">
 
 
 </select> <br> <br>
-Arn Role : <input type="text" name="role" value="arn:aws:iam::112911278656:role/proximity-serverless-dev-us-east-1-lambdaRole"> <br> <br>
+Arn Role : <input type="text" name="role" value="arn:aws:iam::112911278656:role/FullAccess-Lambda-DynamoDB"> <br> <br>
 Handler : <input type="text" name="handler"> <br> <br>
 Upload File : <input type="file" name="photo"> <br> <br>
-Event : <textarea rows="10" cols="50" name="fileCode"></textarea>
+Event : <textarea rows="10" cols="50" name="event">{}</textarea>
 <br> <br> <br>
 
-<input type="submit" value="Submit">
+<input type="submit" value="Create Lambda">
+<input type="submit" onclick="javascript: document.getElementById('ltype').value='lambda_invoke'" value="Create Lambda & Invoke">
+
 </form>
