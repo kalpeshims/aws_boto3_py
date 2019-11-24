@@ -1,16 +1,16 @@
 from flask import Flask, render_template, url_for, request
-import boto3
-import zipfile
-import os
+import boto3, zipfile, os, json, sqlite3 
+
 
 iam_client = boto3.client('iam')
 lambda_client = boto3.client('lambda')
 
 app = Flask(__name__)
 
+# class for error handaling
 class ResourceConflictException(Exception): pass
 
-
+# set route "/"
 @app.route('/')
 def index():
    return render_template('index.html')
@@ -20,50 +20,60 @@ def index():
 @app.route('/', methods=['POST'])
 
 def getvalue():
-	#print(request.files['zipCode']);
-	#print ("XXHHH",request.form)
-	#print ("XXHHH",request.method)
-	##if 'fileUpload' in request.files:
+	# get zip file request
 	fileUpload=request.files['photo']
 	#print (fileUpload)
+
+	# save file to folder
 	fileUpload.save(os.path.join('files/', fileUpload.filename))
 
-    
-    # if 'fileUpload' in request.files:
-    # 		fileUpload=request.files['photo']
-    # 		print (fileUpload)    
+	# get the all require variables    
 	funName=request.form['funName']
 	funName=funName.replace(" ", "-")
 	runTime=request.form['runTime'] #"nodejs10.x"
 	role=request.form['role'] #"arn:aws:iam::112911278656:role/proximity-serverless-dev-us-east-1-lambdaRole"
-	handler=request.form['handler'] #"main.handler"
-	#fileCode=request.form['fileCode'] #"Hello test file write"
+	handler=request.form['handler'] # index.handler
 	ltype=request.form['ltype'] #"Hello test file write"
-	event=request.form['event']
+	event=request.form['event'] # event file in json format
+	env_=request.form['env_']	# environment var. in json format
 	Timeout=300
 
+	# set event and env_ variable defautl if are balnk
 	if event == "":
 		event = "{}"
+	if env_ == "":
+		env_ = "{}"
 	
 	# create folder,file and write code into folder
 	# strnew=handler.split(".",2)
 	# filename=strnew[0] + ".js"
 	# zipFileName=funName + ".zip"
+
+	# set file name
 	zipFileName=fileUpload.filename
+	# set file location
 	fileCode='files/' + fileUpload.filename
 
-
+	# file process
 	zipped_code = fileProcess(fileUpload.filename,zipFileName,fileCode)
+	# remove zip file
+	os.remove(fileCode);	
 	
+	# create object
 	botoObj = {
 	  "FunctionName":funName,
 	  "Runtime":runTime,
 	  "Role":role,
 	  "Handler":handler,
 	  "ZipFile":zipped_code,
+	  "Environment":{
+        "Variables": json.loads(env_)
+      },
 	  "Timeout":300
 	  }
 
+	print (botoObj)
+	# call to createLamdaFunction method
 	resLambda = createLamdaFunction(botoObj)
 
 	print(resLambda)
@@ -72,7 +82,6 @@ def getvalue():
 		resInvoke = lambdaInvoke(funName,event)
 	else:
 		resInvoke = ""
-
 
 	resLambda["success"] = 	"LAMBDA CREATED SUCCESSFULLY!!"
 
@@ -87,8 +96,11 @@ def createLamdaFunction(botoObj):
 		  Role=botoObj['Role'],
 		  Handler=botoObj['Handler'],
 		  Code=dict(ZipFile=botoObj['ZipFile']),
-		  Timeout=botoObj['Timeout']
+		  Timeout=botoObj['Timeout'],
+		  Environment=botoObj['Environment']
 		)
+		print(response)
+		# lambda_client.
 		#print(response)
 	except:
   		print ("lamdbaError==")
