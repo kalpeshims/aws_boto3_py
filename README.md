@@ -4,6 +4,14 @@ Create Lambda & Invoke.
 
 Steps to install
 
+Configre your aws credentials.
+> aws configure  (then Enter)
+> AWS Access Key ID [****************XXX]: Enter AWS Access Key ID
+> AWS Secret Access Key [****************XXX]: Enter AWS Secret Access Key
+> Default region name [us-east-1]: Enter region name
+> Default output format [None]: Enter
+
+
 Install boto3
 > pip3 install boto3
 
