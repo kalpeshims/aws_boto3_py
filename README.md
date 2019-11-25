@@ -25,10 +25,13 @@ Install Flask
 Run project
 
 > git clone https://github.com/kalpeshims/aws_boto3_py.git
+
 > cd aws_boto3_py
+
 > python app.py
 
-you will get following response.
+
+You will get following response.
 
  * Serving Flask app "app" (lazy loading)
  * Environment: production
