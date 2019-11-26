@@ -1,14 +1,28 @@
 from flask import Flask, render_template, url_for, request
 import boto3, zipfile, os, json, sqlite3 
 
-
 iam_client = boto3.client('iam')
 lambda_client = boto3.client('lambda')
-
 app = Flask(__name__)
 
 # class for error handaling
 class ResourceConflictException(Exception): pass
+
+# create database;
+conn = sqlite3.connect('templates/awslambda.db')
+c = conn.cursor()
+
+def create_table():
+	c.execute('CREATE TABLE IF NOT EXISTS lambda_function( id integer PRIMARY KEY AUTOINCREMENT, fun_name text not null, action text NOT NULL, res_lambda text default null, res_invoke text default null);')
+
+create_table()
+
+# def data_entry():
+# 	c.execute('INTER INTO lambda_function VALUES(1,"fun_name","action","res_lambda","res_invoke")');
+# 	conn.commit()
+# 	c.close()
+# 	conn.close()
+#data_entry()
 
 # set route "/"
 @app.route('/')
@@ -24,9 +38,6 @@ def getvalue():
 	fileUpload=request.files['photo']
 	#print (fileUpload)
 
-	# save file to folder
-	fileUpload.save(os.path.join('files/', fileUpload.filename))
-
 	# get the all require variables    
 	funName=request.form['funName']
 	funName=funName.replace(" ", "-")
@@ -36,6 +47,9 @@ def getvalue():
 	ltype=request.form['ltype'] #"Hello test file write"
 	event=request.form['event'] # event file in json format
 	env_=request.form['env_']	# environment var. in json format
+	ext=request.form['ext']	# get extention
+	code=request.form['code']	# get extention
+	upload_opt=request.form['upload_opt']	# upload option (zip or textarea)
 	Timeout=300
 
 	# set event and env_ variable defautl if are balnk
@@ -44,18 +58,44 @@ def getvalue():
 	if env_ == "":
 		env_ = "{}"
 	
-	# create folder,file and write code into folder
+	# create folder, file and write code into folder
 	# strnew=handler.split(".",2)
 	# filename=strnew[0] + ".js"
 	# zipFileName=funName + ".zip"
 
-	# set file name
-	zipFileName=fileUpload.filename
-	# set file location
-	fileCode='files/' + fileUpload.filename
+	if(upload_opt == 'zip'):
+
+		# save file to folder
+		fileUpload.save(os.path.join('files/', fileUpload.filename))
+
+		# set file name
+		zipFileName=fileUpload.filename
+		# set file location
+		fileCode='files/' + fileUpload.filename
+	elif(upload_opt == 'textarea'):
+		# create folder, file and write code into folder
+		strnew=handler.split(".",2)
+		filename=strnew[0] + "."+ext
+		zipFileName=funName + ".zip"
+
+		# write code into file
+		f = open(filename, "w")
+		f.write(code)
+		f.close()
+
+		# create zip file
+		zipObj = zipfile.ZipFile(zipFileName, 'w')
+		zipObj.write(filename)
+		zipObj.close()
+
+		fileCode = zipFileName
+
+
+	#print (fileUpload)
+
 
 	# file process
-	zipped_code = fileProcess(fileUpload.filename,zipFileName,fileCode)
+	zipped_code = fileProcess(fileCode)
 	# remove zip file
 	os.remove(fileCode);	
 	
@@ -78,11 +118,33 @@ def getvalue():
 
 	print(resLambda)
 
+	#insQue = "INSERT INTO lambda_function VALUES('"+funName+"',"
+
+	#,"##lambda##","'+resLambda+'"'
+
+
 	if ltype == 'lambda_invoke':
 		resInvoke = lambdaInvoke(funName,event)
+		
+		pay_ = resInvoke['Payload']
+		pay_res = pay_.read().decode("utf-8")
+		print ("PAYLOAD RESPONSE")
+		print (pay_res)
+		
+		#insQue = insQue + "'lambda_invoke', '"+json.dumps(resLambda)+"','"+ bytes(json.dumps(resInvoke)).escape()+"')"
 	else:
 		resInvoke = ""
+		#insQue = insQue + "'lambda', '"+json.dumps(resLambda)+"',null)"
 
+	print ("########## sqlite query \n\n")
+	#print (insQue)	
+
+	# c.execute(insQue)
+	# c.close()
+	# conn.close()
+
+	
+		
 	resLambda["success"] = 	"LAMBDA CREATED SUCCESSFULLY!!"
 
 	return render_template('index.html',res_lambda=resLambda, res_invoke=resInvoke)
@@ -99,6 +161,7 @@ def createLamdaFunction(botoObj):
 		  Timeout=botoObj['Timeout'],
 		  Environment=botoObj['Environment']
 		)
+		#response  = 19 - 9
 		print(response)
 		# lambda_client.
 		#print(response)
@@ -121,7 +184,7 @@ def lambdaInvoke(funName,event):
 	return res
 
 
-def fileProcess(filename,zipFileName,fileCode):
+def fileProcess(fileCode):
 	
 	# # make zip file of the folder
 	# # os.makedirs(os.path.dirname(filename), exist_ok=True)	
