@@ -4,7 +4,7 @@ Create Lambda & Invoke.
 
 Steps to install
 
-Configre your aws credentials.
+Configre your aws credentials. (Using Commandline)
 > aws configure  (then Enter)
 
 > AWS Access Key ID [****************XXX]: Enter AWS Access Key ID
